@@ -61,7 +61,7 @@ function Toolbar({
           </Select>
         </FormControl>
         <TextField
-          label="Search"
+          label="Search by Title/Code"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"

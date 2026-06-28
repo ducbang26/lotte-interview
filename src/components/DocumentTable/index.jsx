@@ -19,12 +19,20 @@ import {
   TablePagination,
   LinearProgress,
   IconButton,
+  TextField,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "../../hooks/useDebounce";
-import { getDocuments } from "../../services/apiHandlers";
+import { getDocuments, updateDocument } from "../../services/apiHandlers";
 import ToolBar from "../ToolBar";
 import ActionCell from "../ActionCell";
+import StatusBadge from "../StatusBadge";
+import { documentSchema } from "../../services/schema";
+import { categoryFormLabel, statusFormLabel } from "../../const";
+import EditIcon from "@mui/icons-material/Edit";
 
 export default function DocumentTable() {
   const [search, setSearch] = React.useState("");
@@ -36,6 +44,10 @@ export default function DocumentTable() {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const [editingCell, setEditingCell] = React.useState(null);
+  const [draftValues, setDraftValues] = React.useState({});
+  const [cellErrors, setCellErrors] = React.useState({});
 
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: [
@@ -64,9 +76,14 @@ export default function DocumentTable() {
   const columns = React.useMemo(
     () => [
       { accessorKey: "code", header: "Code" },
-      { accessorKey: "title", header: "Title" },
-      { accessorKey: "category", header: "Category" },
-      { accessorKey: "status", header: "Status" },
+      { accessorKey: "title", header: "Title", isEdit: true },
+      { accessorKey: "category", header: "Category", isEdit: true },
+      {
+        accessorKey: "status",
+        header: "Status",
+        isEdit: true,
+        cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      },
       { accessorKey: "createdBy", header: "Created By" },
       { accessorKey: "createdDate", header: "Created Date" },
       {
@@ -75,7 +92,7 @@ export default function DocumentTable() {
         cell: ({ row }) => <ActionCell row={row} />,
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -93,6 +110,62 @@ export default function DocumentTable() {
   });
 
   const handleSearch = React.useCallback((val) => setSearch(val), []);
+
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: updateDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["documents"]);
+    },
+  });
+
+  const startEdit = (rowId, columnId, initialValue) => {
+    setEditingCell({ rowId, columnId });
+    setDraftValues((prev) => ({
+      ...prev,
+      [rowId]: { ...prev[rowId], [columnId]: initialValue },
+    }));
+  };
+
+  const handleChange = (rowId, columnId, value) => {
+    setDraftValues((prev) => ({
+      ...prev,
+      [rowId]: { ...prev[rowId], [columnId]: value },
+    }));
+  };
+
+  const handleSave = async (rowId, originalRow) => {
+    const rowData = { ...originalRow, ...draftValues[rowId] };
+    console.log("Data:", rowData, "Original:", originalRow);
+    try {
+      await documentSchema.validate(rowData, { abortEarly: false });
+
+      updateMutation.mutate(
+        { ...originalRow, ...rowData },
+        {
+          onSuccess: () => {
+            setEditingCell(null);
+
+            setDraftValues((prev) => {
+              const { [rowId]: _, ...rest } = prev;
+              return rest;
+            });
+
+            setCellErrors((prev) => ({ ...prev, [rowId]: {} }));
+          },
+        },
+      );
+    } catch (err) {
+      if (err.inner) {
+        const rowErrs = {};
+        err.inner.forEach((e) => {
+          rowErrs[e.path] = e.message;
+        });
+        setCellErrors((prev) => ({ ...prev, [rowId]: rowErrs }));
+      }
+    }
+  };
 
   if (isLoading) return <Typography>Loading...</Typography>;
   if (isError)
@@ -126,7 +199,7 @@ export default function DocumentTable() {
                   <TableCell key={header.id} sx={{ fontWeight: "bold" }}>
                     {flexRender(
                       header.column.columnDef.header,
-                      header.getContext()
+                      header.getContext(),
                     )}
                   </TableCell>
                 ))}
@@ -135,16 +208,137 @@ export default function DocumentTable() {
           </TableHead>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                hover
-                sx={{ "&:hover": { backgroundColor: "grey.50" } }}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => {
+                  const columnDef = cell.column.columnDef;
+                  const field = columnDef.accessorKey;
+                  const isEditing =
+                    editingCell?.rowId === row.id &&
+                    editingCell?.columnId === field;
+                  const value = draftValues[row.id]?.[field] ?? cell.getValue();
+                  const errorMsg = cellErrors[row.id]?.[field];
+
+                  return (
+                    <TableCell key={cell.id}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          "&:hover .edit-icon": { visibility: "visible" },
+                        }}
+                      >
+                        <Box sx={{ flexGrow: 1 }}>
+                          {isEditing ? (
+                            field === "status" ? (
+                              <FormControl
+                                size="small"
+                                fullWidth
+                                error={!!errorMsg}
+                              >
+                                <Select
+                                  value={value}
+                                  autoFocus
+                                  onChange={(e) =>
+                                    handleChange(row.id, field, e.target.value)
+                                  }
+                                  onBlur={() =>
+                                    handleSave(row.id, row.original)
+                                  }
+                                >
+                                  {statusFormLabel.map((item, index) => (
+                                    <MenuItem
+                                      key={`${item}-${index}`}
+                                      value={item}
+                                    >
+                                      {item}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                                {errorMsg && (
+                                  <Typography
+                                    variant="caption"
+                                    color="error"
+                                    sx={{ ml: 1 }}
+                                  >
+                                    {errorMsg}
+                                  </Typography>
+                                )}
+                              </FormControl>
+                            ) : field === "category" ? (
+                              <FormControl
+                                size="small"
+                                fullWidth
+                                error={!!errorMsg}
+                              >
+                                <Select
+                                  value={value}
+                                  autoFocus
+                                  onChange={(e) =>
+                                    handleChange(row.id, field, e.target.value)
+                                  }
+                                  onBlur={() =>
+                                    handleSave(row.id, row.original)
+                                  }
+                                >
+                                  {categoryFormLabel.map((item, index) => (
+                                    <MenuItem
+                                      key={`${item}-${index}`}
+                                      value={item}
+                                    >
+                                      {item}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                                {errorMsg && (
+                                  <Typography
+                                    variant="caption"
+                                    color="error"
+                                    sx={{ ml: 1 }}
+                                  >
+                                    {errorMsg}
+                                  </Typography>
+                                )}
+                              </FormControl>
+                            ) : (
+                              <TextField
+                                value={value}
+                                size="small"
+                                autoFocus
+                                error={!!errorMsg}
+                                helperText={errorMsg}
+                                onChange={(e) =>
+                                  handleChange(row.id, field, e.target.value)
+                                }
+                                onBlur={() => handleSave(row.id, row.original)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleSave(row.id, row.original);
+                                  }
+                                }}
+                              />
+                            )
+                          ) : columnDef.cell ? (
+                            flexRender(columnDef.cell, cell.getContext())
+                          ) : (
+                            value
+                          )}
+                        </Box>
+                        {columnDef.isEdit && !isEditing && (
+                          <IconButton
+                            className="edit-icon"
+                            size="small"
+                            sx={{ visibility: "hidden" }}
+                            onClick={() =>
+                              startEdit(row.id, field, cell.getValue())
+                            }
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

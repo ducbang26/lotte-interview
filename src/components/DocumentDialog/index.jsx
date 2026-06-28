@@ -18,15 +18,7 @@ import * as yup from "yup";
 import { categoryFormLabel, statusFormLabel } from "../../const";
 import { createDocument, updateDocument } from "../../services/apiHandlers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-// Validation schema
-const schema = yup.object().shape({
-  code: yup.string().required("Code is required"),
-  title: yup.string().required("Title is required"),
-  category: yup.string().required("Category is required"),
-  status: yup.string().required("Status is required"),
-  createdBy: yup.string().required("Created By is required"),
-});
+import { documentSchema } from "../../services/schema";
 
 export default function DocumentDialog({ open, onClose, mode, initialData }) {
   const {
@@ -42,7 +34,7 @@ export default function DocumentDialog({ open, onClose, mode, initialData }) {
       status: "",
       createdBy: "",
     },
-    resolver: yupResolver(schema),
+    resolver: yupResolver(documentSchema),
   });
 
   React.useEffect(() => {
