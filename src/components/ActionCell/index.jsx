@@ -14,11 +14,20 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DocumentDialog from "../DocumentDialog";
 import { deleteDocument } from "../../services/apiHandlers";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function ActionCell({ row }) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
   const [openEditDialog, setOpenEditDialog] = React.useState(false);
   const [selectedDoc, setSelectedDoc] = React.useState({});
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["documents"]);
+    },
+  });
 
   const handleEdit = () => {
     setOpenEditDialog(true);
@@ -27,7 +36,7 @@ export default function ActionCell({ row }) {
   };
 
   const handleDeleteConfirm = () => {
-    deleteDocument(row.original.id);
+    deleteMutation.mutate(row.original.id);
     console.log("Delete document:", row.original);
     setOpen(false);
   };
