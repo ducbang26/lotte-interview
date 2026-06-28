@@ -1,0 +1,39 @@
+:root {
+  font-family: Inter, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  --white-100: #ffffff;
+  --black-100: #070707;
+  --blue-100: #0530AD;
+  --blue-90: #052faddb;
+
+  color-scheme: light dark;
+  background-color: var(--white-100);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+html {
+  box-sizing: border-box;
+  font-family: Inter, sans-serif;
+  font-size: 62.5%;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+table, td, th {
+  transition: all 0.4s ease-in-out;
+}

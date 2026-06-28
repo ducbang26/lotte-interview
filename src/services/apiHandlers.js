@@ -1,0 +1,35 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "/api",
+});
+
+// GET documents query params: page, pageSize, search, sortBy, sortDir, status, category
+export const getDocuments = async (params) => {
+  const res = await api.get("/documents", { params });
+  return res.data;
+};
+
+// POST create document
+export const createDocument = async (doc) => {
+  const res = await api.post("/documents", doc);
+  return res.data;
+};
+
+// PUT update document
+export const updateDocument = async (doc) => {
+  const res = await api.put(`/documents/${doc.id}`, doc);
+  return res.data;
+};
+
+// DELETE document
+export const deleteDocument = async (id) => {
+  const res = await api.delete(`/documents/${id}`);
+  return res.data;
+};
+
+// Bulk import
+export const bulkImportDocuments = async (rows) => {
+  const res = await api.post("/documents/bulk-import", rows);
+  return res.data;
+};
