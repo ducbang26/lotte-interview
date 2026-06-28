@@ -1,4 +1,5 @@
 import React from "react";
+import Papa from "papaparse";
 import {
   Box,
   TextField,
@@ -10,6 +11,8 @@ import {
 } from "@mui/material";
 import { categoryLabel, statusLabel } from "../../const";
 import DocumentDialog from "../DocumentDialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { bulkImportDocuments } from "../../services/apiHandlers";
 
 function Toolbar({
   search,
@@ -20,6 +23,26 @@ function Toolbar({
   setCategory,
 }) {
   const [openCreateDialog, setOpenCreateDialog] = React.useState(false);
+
+  const queryClient = useQueryClient();
+
+  const bulkImportMutation = useMutation({
+    mutationFn: bulkImportDocuments,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["documents"]);
+    },
+  });
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    Papa.parse(file, {
+      header: true,
+      complete: (results) => {
+        const rows = results.data;
+        bulkImportMutation.mutate(rows);
+      },
+    });
+  };
 
   return (
     <>
@@ -74,8 +97,9 @@ function Toolbar({
         >
           + Add Document
         </Button>
-        <Button variant="outlined" sx={{ borderColor: "grey.400" }}>
+        <Button component="label" variant="outlined" sx={{ borderColor: "grey.400" }}>
           Bulk Import
+          <input type="file" hidden onChange={handleFileUpload} />
         </Button>
       </Box>
       <DocumentDialog

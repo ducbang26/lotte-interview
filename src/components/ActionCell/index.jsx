@@ -15,12 +15,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DocumentDialog from "../DocumentDialog";
 import { deleteDocument } from "../../services/apiHandlers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRole } from "../../context/RoleContext";
 
 export default function ActionCell({ row }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
   const [openEditDialog, setOpenEditDialog] = React.useState(false);
   const [selectedDoc, setSelectedDoc] = React.useState({});
+  const { role, user } = useRole();
 
   const deleteMutation = useMutation({
     mutationFn: deleteDocument,
@@ -50,9 +52,15 @@ export default function ActionCell({ row }) {
           </IconButton>
         </Tooltip>
         <Tooltip title="delete">
-          <IconButton color="error" size="small" onClick={() => setOpen(true)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          {role === "STAFF" && row.original.createdBy === user && (
+            <IconButton
+              color="error"
+              size="small"
+              onClick={() => setOpen(true)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
         </Tooltip>
 
         <Dialog open={open} onClose={() => setOpen(false)}>

@@ -28,7 +28,6 @@ let documents = [
     createdBy: "Admin",
     createdDate: "2026-06-20",
   },
-  // thêm các item khác
   {
     id: "4",
     code: "DOC004",
@@ -241,19 +240,16 @@ export const handlers = [
     const status = url.searchParams.get("status") || "All";
     const category = url.searchParams.get("category") || "All";
 
-    // Filter theo search
     let filtered = documents.filter(
       (doc) =>
         doc.title.toLowerCase().includes(search.toLowerCase()) ||
         doc.code.toLowerCase().includes(search.toLowerCase())
     );
 
-    // Filter theo status
     if (status !== "All") {
       filtered = filtered.filter((doc) => doc.status === status);
     }
 
-    // Filter theo category
     if (category !== "All") {
       filtered = filtered.filter((doc) => doc.category === category);
     }

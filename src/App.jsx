@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import DocumentTable from "./components/DocumentTable";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RoleProvider } from "./context/RoleContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,7 +15,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DocumentTable />
+      <RoleProvider>
+        <DocumentTable />
+      </RoleProvider>
     </QueryClientProvider>
   );
 }
