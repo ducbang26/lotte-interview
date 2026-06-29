@@ -13,6 +13,7 @@ import { categoryLabel, statusLabel } from "../../const";
 import DocumentDialog from "../DocumentDialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { bulkImportDocuments } from "../../services/apiHandlers";
+import BulkImportModal from "../BulkImportModal";
 
 function Toolbar({
   search,
@@ -23,6 +24,7 @@ function Toolbar({
   setCategory,
 }) {
   const [openCreateDialog, setOpenCreateDialog] = React.useState(false);
+  const [openBulkImportDialog, setOpenBulkImportDialog] = React.useState(false);
 
   const queryClient = useQueryClient();
 
@@ -97,9 +99,13 @@ function Toolbar({
         >
           + Add Document
         </Button>
-        <Button component="label" variant="outlined" sx={{ borderColor: "grey.400" }}>
+        <Button
+          component="label"
+          variant="outlined"
+          sx={{ borderColor: "grey.400" }}
+          onClick={() => setOpenBulkImportDialog(true)}
+        >
           Bulk Import
-          <input type="file" hidden onChange={handleFileUpload} />
         </Button>
       </Box>
       <DocumentDialog
@@ -113,6 +119,13 @@ function Toolbar({
           status: "",
           createdBy: "",
         }}
+      />
+
+      <BulkImportModal
+        open={openBulkImportDialog}
+        onClose={() => setOpenBulkImportDialog(false)}
+        onImport={(rows) => bulkImportMutation.mutate(rows)}
+        loading={bulkImportMutation.isPending}
       />
     </>
   );
