@@ -54,7 +54,7 @@ export default function ActionCell({ row }) {
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="delete">
+        <Tooltip title="Delete">
           {canDelete && (
             <IconButton
               color="error"
@@ -85,7 +85,7 @@ export default function ActionCell({ row }) {
       <DocumentDialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
-        mode={"edit"}
+        mode={"Edit"}
         initialData={selectedDoc}
       />
     </>
