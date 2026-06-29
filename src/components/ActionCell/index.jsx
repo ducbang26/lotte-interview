@@ -7,7 +7,6 @@ import {
   DialogActions,
   Button,
   IconButton,
-  Tooltip,
   Box,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -49,22 +48,14 @@ export default function ActionCell({ row }) {
   return (
     <>
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Tooltip title="edit">
-          <IconButton color="primary" size="small" onClick={handleEdit}>
-            <EditIcon fontSize="small" />
+        <IconButton color="primary" size="small" onClick={handleEdit}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+        {canDelete && (
+          <IconButton color="error" size="small" onClick={() => setOpen(true)}>
+            <DeleteIcon fontSize="small" />
           </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          {canDelete && (
-            <IconButton
-              color="error"
-              size="small"
-              onClick={() => setOpen(true)}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Tooltip>
+        )}
 
         <Dialog open={open} onClose={() => setOpen(false)}>
           <DialogTitle>Delete Confirmation</DialogTitle>
