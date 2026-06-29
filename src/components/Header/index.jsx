@@ -17,6 +17,8 @@ export default function Header() {
         alignItems: "center",
         padding: "12px 20px",
         color: "black",
+        flexWrap: "wrap",
+        gap: "16px",
       }}
     >
       <Typography variant="h3">File Management Module</Typography>

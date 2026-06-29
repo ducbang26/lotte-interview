@@ -24,6 +24,7 @@ import {
   Select,
   MenuItem,
   Button,
+  Skeleton,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -185,9 +186,6 @@ export default function DocumentTable() {
         category={category}
         setCategory={setCategory}
       />
-
-      {isFetching && <LinearProgress sx={{ mb: 1 }} />}
-
       {/* Table */}
       <TableContainer component={Paper} sx={{ border: "1px solid #ddd" }}>
         <Table>
@@ -277,6 +275,22 @@ export default function DocumentTable() {
                   </Box>
                 </TableCell>
               </TableRow>
+            ) : isFetching ? (
+              Array.from({ length: 10 }).map((_, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {table.getAllColumns().map((column, colIndex) => (
+                    <TableCell key={colIndex}>
+                      <Skeleton
+                        height={20}
+                        sx={{
+                          borderRadius: 1,
+                          width: "100px",
+                        }}
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
