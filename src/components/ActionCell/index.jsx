@@ -24,6 +24,9 @@ export default function ActionCell({ row }) {
   const [selectedDoc, setSelectedDoc] = React.useState({});
   const { role, user } = useRole();
 
+  const canDelete =
+    role === "ADMIN" || (role === "STAFF" && row.original.createdBy === user);
+
   const deleteMutation = useMutation({
     mutationFn: deleteDocument,
     onSuccess: () => {
@@ -52,7 +55,7 @@ export default function ActionCell({ row }) {
           </IconButton>
         </Tooltip>
         <Tooltip title="delete">
-          {role === "STAFF" && row.original.createdBy === user && (
+          {canDelete && (
             <IconButton
               color="error"
               size="small"

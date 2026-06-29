@@ -5,7 +5,7 @@ const RoleContext = createContext();
 export function RoleProvider({ children }) {
   //CHANGE ROLE HERE TO TEST DIFFERENT ROLES STAFF OR ADMIN
   const [role, setRole] = useState("STAFF");
-  const [user, setUser] = useState("Alice");
+  const [user, setUser] = useState("Staff");
 
   return (
     <RoleContext.Provider value={{ role, setRole, user }}>

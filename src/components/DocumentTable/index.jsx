@@ -23,6 +23,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  Button,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -33,6 +34,8 @@ import StatusBadge from "../StatusBadge";
 import { documentSchema } from "../../services/schema";
 import { categoryFormLabel, statusFormLabel } from "../../const";
 import EditIcon from "@mui/icons-material/Edit";
+import ReportIcon from "@mui/icons-material/Report";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 
 export default function DocumentTable() {
   const [search, setSearch] = React.useState("");
@@ -92,7 +95,7 @@ export default function DocumentTable() {
         cell: ({ row }) => <ActionCell row={row} />,
       },
     ],
-    [],
+    []
   );
 
   const table = useReactTable({
@@ -154,7 +157,7 @@ export default function DocumentTable() {
 
             setCellErrors((prev) => ({ ...prev, [rowId]: {} }));
           },
-        },
+        }
       );
     } catch (err) {
       if (err.inner) {
@@ -166,10 +169,6 @@ export default function DocumentTable() {
       }
     }
   };
-
-  if (isLoading) return <Typography>Loading...</Typography>;
-  if (isError)
-    return <Typography color="error">Error loading documents</Typography>;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -199,7 +198,7 @@ export default function DocumentTable() {
                   <TableCell key={header.id} sx={{ fontWeight: "bold" }}>
                     {flexRender(
                       header.column.columnDef.header,
-                      header.getContext(),
+                      header.getContext()
                     )}
                   </TableCell>
                 ))}
@@ -207,140 +206,224 @@ export default function DocumentTable() {
             ))}
           </TableHead>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => {
-                  const columnDef = cell.column.columnDef;
-                  const field = columnDef.accessorKey;
-                  const isEditing =
-                    editingCell?.rowId === row.id &&
-                    editingCell?.columnId === field;
-                  const value = draftValues[row.id]?.[field] ?? cell.getValue();
-                  const errorMsg = cellErrors[row.id]?.[field];
+            {!isLoading && isError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={table.getAllColumns().length}
+                  align="center"
+                  sx={{ height: 300 }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      py: 4,
+                      color: "text.secondary",
+                    }}
+                  >
+                    <ReportIcon
+                      sx={{
+                        fontSize: 48,
+                        color: "error.main",
+                        mb: 1,
+                      }}
+                    />
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        color: "text.primary",
+                        mb: 0.5,
+                      }}
+                    >
+                      Failed to Load Documents
+                    </Typography>
 
-                  return (
-                    <TableCell key={cell.id}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          "&:hover .edit-icon": { visibility: "visible" },
-                        }}
-                      >
-                        <Box sx={{ flexGrow: 1 }}>
-                          {isEditing ? (
-                            field === "status" ? (
-                              <FormControl
-                                size="small"
-                                fullWidth
-                                error={!!errorMsg}
-                              >
-                                <Select
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 2,
+                        maxWidth: 400,
+                      }}
+                    >
+                      Something went wrong while fetching the documents. Please
+                      try again.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<RotateLeftIcon />}
+                      onClick={() => {
+                        getDocuments({
+                          ...pagination,
+                          search: debouncedSearch,
+                          sortBy: "createdDate",
+                          sortDir: "desc",
+                          status,
+                          category,
+                        });
+                      }}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 2,
+                        px: 3,
+                      }}
+                    >
+                      Retry Request
+                    </Button>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    const columnDef = cell.column.columnDef;
+                    const field = columnDef.accessorKey;
+                    const isEditing =
+                      editingCell?.rowId === row.id &&
+                      editingCell?.columnId === field;
+                    const value =
+                      draftValues[row.id]?.[field] ?? cell.getValue();
+                    const errorMsg = cellErrors[row.id]?.[field];
+
+                    return (
+                      <TableCell key={cell.id}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            "&:hover .edit-icon": { visibility: "visible" },
+                          }}
+                        >
+                          <Box sx={{ flexGrow: 1 }}>
+                            {isEditing ? (
+                              field === "status" ? (
+                                <FormControl
+                                  size="small"
+                                  fullWidth
+                                  error={!!errorMsg}
+                                >
+                                  <Select
+                                    value={value}
+                                    autoFocus
+                                    onChange={(e) =>
+                                      handleChange(
+                                        row.id,
+                                        field,
+                                        e.target.value
+                                      )
+                                    }
+                                    onBlur={() =>
+                                      handleSave(row.id, row.original)
+                                    }
+                                  >
+                                    {statusFormLabel.map((item, index) => (
+                                      <MenuItem
+                                        key={`${item}-${index}`}
+                                        value={item}
+                                      >
+                                        {item}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                  {errorMsg && (
+                                    <Typography
+                                      variant="caption"
+                                      color="error"
+                                      sx={{ ml: 1 }}
+                                    >
+                                      {errorMsg}
+                                    </Typography>
+                                  )}
+                                </FormControl>
+                              ) : field === "category" ? (
+                                <FormControl
+                                  size="small"
+                                  fullWidth
+                                  error={!!errorMsg}
+                                >
+                                  <Select
+                                    value={value}
+                                    autoFocus
+                                    onChange={(e) =>
+                                      handleChange(
+                                        row.id,
+                                        field,
+                                        e.target.value
+                                      )
+                                    }
+                                    onBlur={() =>
+                                      handleSave(row.id, row.original)
+                                    }
+                                  >
+                                    {categoryFormLabel.map((item, index) => (
+                                      <MenuItem
+                                        key={`${item}-${index}`}
+                                        value={item}
+                                      >
+                                        {item}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                  {errorMsg && (
+                                    <Typography
+                                      variant="caption"
+                                      color="error"
+                                      sx={{ ml: 1 }}
+                                    >
+                                      {errorMsg}
+                                    </Typography>
+                                  )}
+                                </FormControl>
+                              ) : (
+                                <TextField
                                   value={value}
+                                  size="small"
                                   autoFocus
+                                  error={!!errorMsg}
+                                  helperText={errorMsg}
                                   onChange={(e) =>
                                     handleChange(row.id, field, e.target.value)
                                   }
                                   onBlur={() =>
                                     handleSave(row.id, row.original)
                                   }
-                                >
-                                  {statusFormLabel.map((item, index) => (
-                                    <MenuItem
-                                      key={`${item}-${index}`}
-                                      value={item}
-                                    >
-                                      {item}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                                {errorMsg && (
-                                  <Typography
-                                    variant="caption"
-                                    color="error"
-                                    sx={{ ml: 1 }}
-                                  >
-                                    {errorMsg}
-                                  </Typography>
-                                )}
-                              </FormControl>
-                            ) : field === "category" ? (
-                              <FormControl
-                                size="small"
-                                fullWidth
-                                error={!!errorMsg}
-                              >
-                                <Select
-                                  value={value}
-                                  autoFocus
-                                  onChange={(e) =>
-                                    handleChange(row.id, field, e.target.value)
-                                  }
-                                  onBlur={() =>
-                                    handleSave(row.id, row.original)
-                                  }
-                                >
-                                  {categoryFormLabel.map((item, index) => (
-                                    <MenuItem
-                                      key={`${item}-${index}`}
-                                      value={item}
-                                    >
-                                      {item}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                                {errorMsg && (
-                                  <Typography
-                                    variant="caption"
-                                    color="error"
-                                    sx={{ ml: 1 }}
-                                  >
-                                    {errorMsg}
-                                  </Typography>
-                                )}
-                              </FormControl>
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      handleSave(row.id, row.original);
+                                    }
+                                  }}
+                                />
+                              )
+                            ) : columnDef.cell ? (
+                              flexRender(columnDef.cell, cell.getContext())
                             ) : (
-                              <TextField
-                                value={value}
-                                size="small"
-                                autoFocus
-                                error={!!errorMsg}
-                                helperText={errorMsg}
-                                onChange={(e) =>
-                                  handleChange(row.id, field, e.target.value)
-                                }
-                                onBlur={() => handleSave(row.id, row.original)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleSave(row.id, row.original);
-                                  }
-                                }}
-                              />
-                            )
-                          ) : columnDef.cell ? (
-                            flexRender(columnDef.cell, cell.getContext())
-                          ) : (
-                            value
+                              value
+                            )}
+                          </Box>
+                          {columnDef.isEdit && !isEditing && (
+                            <IconButton
+                              className="edit-icon"
+                              size="small"
+                              sx={{ visibility: "hidden" }}
+                              onClick={() =>
+                                startEdit(row.id, field, cell.getValue())
+                              }
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
                           )}
                         </Box>
-                        {columnDef.isEdit && !isEditing && (
-                          <IconButton
-                            className="edit-icon"
-                            size="small"
-                            sx={{ visibility: "hidden" }}
-                            onClick={() =>
-                              startEdit(row.id, field, cell.getValue())
-                            }
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </Box>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
