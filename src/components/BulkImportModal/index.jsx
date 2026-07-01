@@ -29,12 +29,10 @@ export default function BulkImportModal({ open, onClose, onImport, loading }) {
 
   const progressRef = useRef(null);
 
-  // ✅ cleanup interval
   useEffect(() => {
     return () => clearInterval(progressRef.current);
   }, []);
 
-  // ✅ Drop + fake progress
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (!file) return;
@@ -45,11 +43,10 @@ export default function BulkImportModal({ open, onClose, onImport, loading }) {
     setParsing(true);
     setProgress(0);
 
-    // ✅ fake smooth progress (0 → 95%)
     progressRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 95) return prev;
-        return prev + (prev > 80 ? 0.5 : 1); // chậm dần cuối
+        return prev + (prev > 80 ? 0.5 : 1);
       });
     }, 50);
 
@@ -156,7 +153,7 @@ export default function BulkImportModal({ open, onClose, onImport, loading }) {
           </Typography>
         </Paper>
 
-        {/* ✅ Progress */}
+        {/* Progress */}
         {parsing && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
@@ -166,14 +163,12 @@ export default function BulkImportModal({ open, onClose, onImport, loading }) {
           </Box>
         )}
 
-        {/* ✅ File name */}
         {fileName && (
           <Typography sx={{ mt: 2 }}>
             📄 <strong>{fileName}</strong>
           </Typography>
         )}
 
-        {/* ✅ Preview */}
         {rows.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
